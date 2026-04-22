@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="https://jakarta.ee/xml/ns/persistence" version="3.0">
+
+    <persistence-unit name="vitrinePU" transaction-type="RESOURCE_LOCAL">
+        <class>com.vitrine.api.model.Customer</class>
+        <class>com.vitrine.api.model.Category</class>
+        <class>com.vitrine.api.model.Product</class>
+        <class>com.vitrine.api.model.Stock</class>
+        <class>com.vitrine.api.model.Order</class>
+        <class>com.vitrine.api.model.OrderItem</class>
+        <class>com.vitrine.api.model.Payment</class>
+        <exclude-unlisted-classes>true</exclude-unlisted-classes>
+    </persistence-unit>
+
+</persistence>
