@@ -1,0 +1,16 @@
+group = 'com.vitrine'
+version = '1.0-SNAPSHOT'
+
+subprojects {
+    apply plugin: 'java'
+
+    repositories {
+        mavenCentral()
+    }
+
+    java {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+}
+subprojects {}

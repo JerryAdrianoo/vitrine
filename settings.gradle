@@ -1,0 +1,11 @@
+rootProject.name = "vitrine"
+
+include "vitrine-api"
+include "vitrine-persistence"
+include "vitrine-service"
+include "vitrine-web"
+
+project(":vitrine-api").projectDir = file("modules/vitrine-api")
+project(":vitrine-persistence").projectDir = file("modules/vitrine-persistence")
+project(":vitrine-service").projectDir = file("modules/vitrine-service")
+project(":vitrine-web").projectDir = file("modules/vitrine-web")
