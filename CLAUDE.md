@@ -7,23 +7,24 @@ Formato obrigatório:
 VT-{N} Verb in sentence case describing the change
 ```
 
-- `VT-{N}` — número sequencial do ticket/PR (VT-1, VT-2, VT-3...)
+- `VT-{N}` — número sequencial do ticket/PR com zeros à esquerda (VT-00001, VT-00002...)
+- Todos os commits de um mesmo PR levam o mesmo número
 - Primeira letra maiúscula após o número
 - Verbo no imperativo: Add, Fix, Update, Remove, Refactor
 - Cada commit deve conter apenas uma categoria lógica de mudança
 
 Exemplos válidos:
 ```
-VT-1 Add Gradle multi-module project structure
-VT-2 Add domain models and enums
-VT-3 Fix null pointer in OrderServiceImpl
+VT-00001 Add Gradle multi-module project structure
+VT-00001 Add domain models and enums
+VT-00002 Fix null pointer in OrderServiceImpl
 ```
 
 Exemplos inválidos:
 ```
-add stuff                        ← sem prefixo VT, sem capitalização
-VT-1 Add models and fix bug      ← mistura duas categorias
-VT-1 added the customer model    ← verbo no passado, sem capitalização
+add stuff                             ← sem prefixo VT, sem capitalização
+VT-00001 Add models and fix bug       ← mistura duas categorias
+VT-00001 added the customer model     ← verbo no passado, sem capitalização
 ```
 
 ## Stack
