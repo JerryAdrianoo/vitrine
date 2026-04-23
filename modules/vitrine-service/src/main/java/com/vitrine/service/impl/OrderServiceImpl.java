@@ -11,12 +11,16 @@ import com.vitrine.api.repository.OrderRepository;
 import com.vitrine.api.repository.ProductRepository;
 import com.vitrine.api.repository.StockRepository;
 import com.vitrine.api.service.OrderService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 public class OrderServiceImpl implements OrderService {
+
+    private static final Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
     private final OrderRepository orderRepository;
     private final CustomerRepository customerRepository;
     private final StockRepository stockRepository;
@@ -31,6 +35,8 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public Order placeOrder(Long customerId, List<OrderItem> items) {
+        logger.debug("Placing order for customer {}, {} item(s)", customerId, items.size());
+
         Customer customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new IllegalArgumentException("Customer not found: " + customerId));
 
@@ -62,6 +68,7 @@ public class OrderServiceImpl implements OrderService {
                 item -> item.setOrder(order));
 
         orderRepository.save(order);
+        logger.info("Order placed: id={}, customer={}", order.getId(), customerId);
 
         return order;
     }
@@ -89,5 +96,6 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(OrderStatus.CANCELLED);
 
         orderRepository.update(order);
+        logger.info("Order cancelled: {}", orderId);
     }
 }

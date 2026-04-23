@@ -8,12 +8,16 @@ import com.vitrine.api.model.PaymentStatus;
 import com.vitrine.api.repository.OrderRepository;
 import com.vitrine.api.repository.PaymentRepository;
 import com.vitrine.api.service.PaymentService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 public class PaymentServiceImpl implements PaymentService {
+
+    private static final Logger logger = LoggerFactory.getLogger(PaymentServiceImpl.class);
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
 
@@ -24,6 +28,8 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public Payment process(Long orderId, PaymentMethod method) {
+        logger.debug("Processing payment for order {} with method {}", orderId, method);
+
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " +
                         orderId));
@@ -44,6 +50,7 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setProcessedAt(LocalDateTime.now());
 
         paymentRepository.save(payment);
+        logger.info("Payment approved: order={}, amount={}", orderId, amount);
 
         order.setStatus(OrderStatus.PAID);
         orderRepository.update(order);

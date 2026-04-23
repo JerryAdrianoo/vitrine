@@ -5,17 +5,20 @@ import com.vitrine.api.model.Stock;
 import com.vitrine.api.repository.ProductRepository;
 import com.vitrine.api.repository.StockRepository;
 import com.vitrine.api.service.ProductService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
 
 public class ProductServiceImpl implements ProductService {
 
+    private static final Logger logger = LoggerFactory.getLogger(ProductServiceImpl.class);
+
     private final ProductRepository productRepository;
     private final StockRepository stockRepository;
 
-    public ProductServiceImpl(ProductRepository productRepository, StockRepository
-            stockRepository) {
+    public ProductServiceImpl(ProductRepository productRepository, StockRepository stockRepository) {
         this.productRepository = productRepository;
         this.stockRepository = stockRepository;
     }
@@ -23,6 +26,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void register(Product product, int initialStock) {
         if (initialStock < 0) {
+            logger.warn("Product registration rejected — negative initial stock: {}", initialStock);
             throw new IllegalArgumentException("Initial stock can not be zero.");
         }
 
@@ -33,6 +37,7 @@ public class ProductServiceImpl implements ProductService {
         stock.setQuantity(initialStock);
 
         stockRepository.save(stock);
+        logger.info("Product registered: {} with initial stock {}", product.getName(), initialStock);
     }
 
     @Override
@@ -58,5 +63,6 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void delete(Long id) {
         productRepository.delete(id);
+        logger.info("Product deleted: {}", id);
     }
 }
