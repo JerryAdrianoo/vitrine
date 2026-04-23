@@ -29,7 +29,7 @@ public class AppConfig extends ResourceConfig {
         ProductServiceImpl productService = new ProductServiceImpl(productRepository,
                 stockRepository);
         OrderServiceImpl orderService = new OrderServiceImpl(orderRepository,
-                customerRepository, stockRepository);
+                customerRepository, stockRepository, productRepository);
         PaymentServiceImpl paymentService = new PaymentServiceImpl(paymentRepository,
                 orderRepository);
 
@@ -37,5 +37,6 @@ public class AppConfig extends ResourceConfig {
         register(new ProductResource(productService));
         register(new OrderResource(orderService));
         register(new PaymentResource(paymentService));
+        register(JacksonConfig.class);
     }
 }
