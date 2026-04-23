@@ -12,23 +12,37 @@ public class OrderRepositoryImpl implements OrderRepository {
 
     @Override
     public Optional<Order> findById(Long id) {
-        EntityManager em = HibernateUtil.createEntityManager();
+        EntityManager entityManager = HibernateUtil.createEntityManager();
         try {
-            return Optional.ofNullable(em.find(Order.class, id));
+            List<Order> result = entityManager.createQuery(
+                            "SELECT o FROM Order o " +
+                                "JOIN FETCH o.customer " +
+                                "JOIN FETCH o.items i " +
+                                "JOIN FETCH i.product " +
+                                "WHERE o.id = :id", Order.class)
+                    .setParameter("id", id)
+                    .getResultList();
+
+            return result.isEmpty() ? Optional.empty() : Optional.of(result.get(0));
         } finally {
-            em.close();
+            entityManager.close();
         }
     }
 
     @Override
     public List<Order> findByCustomerId(Long customerId) {
-        EntityManager em = HibernateUtil.createEntityManager();
+        EntityManager entityManager = HibernateUtil.createEntityManager();
         try {
-            return em.createQuery("SELECT o FROM Order o WHERE o.customer.id = :customerId", Order.class)
+            return entityManager.createQuery(
+                            "SELECT DISTINCT o FROM Order o " +
+                                    "JOIN FETCH o.customer " +
+                                    "JOIN FETCH o.items i " +
+                                    "JOIN FETCH i.product " +
+                                    "WHERE o.customer.id = :customerId", Order.class)
                     .setParameter("customerId", customerId)
                     .getResultList();
         } finally {
-            em.close();
+            entityManager.close();
         }
     }
 
