@@ -4,6 +4,7 @@ import com.vitrine.api.model.Order;
 import com.vitrine.api.model.OrderItem;
 import com.vitrine.api.model.Product;
 import com.vitrine.api.service.OrderService;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -30,7 +31,7 @@ public class OrderResource {
     }
 
     @POST
-    public Response placeOrder(@QueryParam("customerId") Long customerId, List<OrderItemRequest> items) {
+    public Response placeOrder(@QueryParam("customerId") Long customerId,@Valid List<OrderItemRequest> items) {
         List<OrderItem> orderItems = items.stream()
                 .map(req -> {
                     OrderItem item = new OrderItem();

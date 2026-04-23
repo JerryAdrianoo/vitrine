@@ -1,8 +1,15 @@
 package com.vitrine.api.dto;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+
 public class OrderItemRequest {
 
+    @NotNull
     private Long productId;
+
+    @NotNull
+    @Min(1)
     private Integer quantity;
 
     public Long getProductId() {

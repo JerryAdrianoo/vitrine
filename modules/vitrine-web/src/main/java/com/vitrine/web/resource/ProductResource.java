@@ -2,6 +2,7 @@ package com.vitrine.web.resource;
 
 import com.vitrine.api.model.Product;
 import com.vitrine.api.service.ProductService;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -27,7 +28,7 @@ public class ProductResource {
     }
 
     @POST
-    public Response register(@QueryParam("initialStock") int initialStock, Product product) {
+    public Response register(@QueryParam("initialStock") int initialStock, @Valid Product product) {
         productService.register(product, initialStock);
         return Response.status(Response.Status.CREATED).build();
     }
@@ -53,7 +54,7 @@ public class ProductResource {
 
     @PUT
     @Path("/{id}")
-    public Response update(@PathParam("id") Long id, Product product) {
+    public Response update(@PathParam("id") Long id, @Valid Product product) {
         product.setId(id);
         productService.update(product);
         return Response.noContent().build();

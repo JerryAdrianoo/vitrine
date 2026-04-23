@@ -2,6 +2,7 @@ package com.vitrine.web.resource;
 
 import com.vitrine.api.model.Customer;
 import com.vitrine.api.service.CustomerService;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -28,7 +29,7 @@ public class CustomerResource {
     }
 
     @POST
-    public Response register(Customer customer) {
+    public Response register(@Valid Customer customer) {
         customerService.register(customer);
         return Response.status(Response.Status.CREATED).build();
     }
@@ -48,7 +49,7 @@ public class CustomerResource {
 
     @PUT
     @Path("/{id}")
-    public Response update(@PathParam("id") Long id, Customer customer) {
+    public Response update(@PathParam("id") Long id, @Valid Customer customer) {
         customer.setId(id);
 
         customerService.update(customer);
