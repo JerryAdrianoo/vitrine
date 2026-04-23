@@ -1,4 +1,4 @@
-package com.vitrine.web.mapper;
+package com.vitrine.web.exception;
 
 import jakarta.validation.ConstraintViolationException;
 import jakarta.ws.rs.core.MediaType;
@@ -15,7 +15,11 @@ public class ConstraintViolationExceptionMapper implements ExceptionMapper<Const
     @Override
     public Response toResponse(ConstraintViolationException constraintViolationException) {
         List<String> errors = constraintViolationException.getConstraintViolations().stream()
-                .map(constraintViolation -> constraintViolation.getPropertyPath() + ": " + constraintViolation.getMessage())
+                .map(cv -> {
+                    String path = cv.getPropertyPath().toString();
+                    String field = path.contains(".") ? path.substring(path.lastIndexOf('.') + 1) : path;
+                    return field + ": " + cv.getMessage();
+                })
                 .toList();
 
         return Response.status(Response.Status.BAD_REQUEST)

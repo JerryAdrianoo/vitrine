@@ -10,6 +10,7 @@ import com.vitrine.service.impl.OrderServiceImpl;
 import com.vitrine.service.impl.PaymentServiceImpl;
 import com.vitrine.service.impl.ProductServiceImpl;
 import com.vitrine.web.exception.AppExceptionMapper;
+import com.vitrine.web.exception.ConstraintViolationExceptionMapper;
 import com.vitrine.web.resource.CustomerResource;
 import com.vitrine.web.resource.OrderResource;
 import com.vitrine.web.resource.PaymentResource;
@@ -40,5 +41,6 @@ public class AppConfig extends ResourceConfig {
         register(new PaymentResource(paymentService));
         register(JacksonConfig.class);
         register(AppExceptionMapper.class);
+        register(ConstraintViolationExceptionMapper.class);
     }
 }
