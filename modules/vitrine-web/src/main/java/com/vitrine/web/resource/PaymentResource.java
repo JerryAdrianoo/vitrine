@@ -3,6 +3,7 @@ package com.vitrine.web.resource;
 import com.vitrine.api.model.Payment;
 import com.vitrine.api.model.PaymentMethod;
 import com.vitrine.api.service.PaymentService;
+import com.vitrine.web.mapper.PaymentMapperUtil;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -26,14 +27,15 @@ public class PaymentResource {
     @POST
     public Response process(@QueryParam("orderId") Long orderId, @QueryParam("method") PaymentMethod paymentMethod) {
         Payment payment = paymentService.process(orderId, paymentMethod);
-        return Response.status(Response.Status.CREATED).entity(payment).build();
+        return Response.status(Response.Status.CREATED).entity(PaymentMapperUtil.toResponse(payment))
+                .build();
     }
 
     @GET
     @Path("/order/{orderId}")
     public Response findByOrder(@PathParam("orderId") Long orderId) {
         return paymentService.findByOrder(orderId)
-                .map(payment -> Response.ok(payment).build())
+                .map(payment -> Response.ok(PaymentMapperUtil.toResponse(payment)).build())
                 .orElse(Response.status(Response.Status.NOT_FOUND).build());
     }
 }

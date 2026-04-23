@@ -2,6 +2,7 @@ package com.vitrine.web.resource;
 
 import com.vitrine.api.model.Order;
 import com.vitrine.api.model.OrderItem;
+import com.vitrine.api.model.Product;
 import com.vitrine.api.service.OrderService;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -12,6 +13,9 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import com.vitrine.api.dto.OrderItemRequest;
+import com.vitrine.api.dto.OrderResponse;
+import com.vitrine.web.mapper.OrderMapperUtil;
 
 import java.util.List;
 
@@ -26,23 +30,39 @@ public class OrderResource {
     }
 
     @POST
-    public Response placeOrder(@QueryParam("customerId") Long customerId, List<OrderItem> items) {
-        Order order = orderService.placeOrder(customerId, items);
-        return Response.status(Response.Status.CREATED).entity(order).build();
+    public Response placeOrder(@QueryParam("customerId") Long customerId, List<OrderItemRequest> items) {
+        List<OrderItem> orderItems = items.stream()
+                .map(req -> {
+                    OrderItem item = new OrderItem();
+                    Product product = new Product();
+                    product.setId(req.getProductId());
+                    item.setProduct(product);
+                    item.setQuantity(req.getQuantity());
+                    return item;
+                })
+                .toList();
+
+        Order order = orderService.placeOrder(customerId, orderItems);
+
+        return Response.status(Response.Status.CREATED)
+                .entity(OrderMapperUtil.toResponse(order))
+                .build();
     }
 
     @GET
     @Path("/{id}")
     public Response findById(@PathParam("id") Long id) {
         return orderService.findById(id)
-                .map(order -> Response.ok(order).build())
+                .map(order -> Response.ok(OrderMapperUtil.toResponse(order)).build())
                 .orElse(Response.status(Response.Status.NOT_FOUND).build());
     }
 
     @GET
     @Path("/customer/{customerId}")
-    public List<Order> findByCustomer(@PathParam("customerId") Long customerId) {
-        return orderService.findByCustomer(customerId);
+    public List<OrderResponse> findByCustomer(@PathParam("customerId") Long customerId) {
+        return orderService.findByCustomer(customerId).stream()
+                .map(OrderMapperUtil::toResponse)
+                .toList();
     }
 
     @POST
