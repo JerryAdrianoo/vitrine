@@ -4,9 +4,11 @@ import com.vitrine.api.model.Customer;
 import com.vitrine.api.model.Order;
 import com.vitrine.api.model.OrderItem;
 import com.vitrine.api.model.OrderStatus;
+import com.vitrine.api.model.Product;
 import com.vitrine.api.model.Stock;
 import com.vitrine.api.repository.CustomerRepository;
 import com.vitrine.api.repository.OrderRepository;
+import com.vitrine.api.repository.ProductRepository;
 import com.vitrine.api.repository.StockRepository;
 import com.vitrine.api.service.OrderService;
 
@@ -18,11 +20,13 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final CustomerRepository customerRepository;
     private final StockRepository stockRepository;
+    private final ProductRepository productRepository;
 
-    public OrderServiceImpl(OrderRepository orderRepository, CustomerRepository customerRepository, StockRepository stockRepository) {
+    public OrderServiceImpl(OrderRepository orderRepository, CustomerRepository customerRepository, StockRepository stockRepository, ProductRepository productRepository) {
         this.orderRepository = orderRepository;
         this.customerRepository = customerRepository;
         this.stockRepository = stockRepository;
+        this.productRepository = productRepository;
     }
 
     @Override
@@ -41,7 +45,11 @@ public class OrderServiceImpl implements OrderService {
             stock.setQuantity(stock.getQuantity() - item.getQuantity());
             stockRepository.update(stock);
 
-            item.setUnitPrice(item.getProduct().getPrice());
+            Product product = productRepository.findById(item.getProduct().getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Product not found: " + item.getProduct().getId()));
+
+            item.setProduct(product);
+            item.setUnitPrice(product.getPrice());
         }
 
         Order order = new Order();

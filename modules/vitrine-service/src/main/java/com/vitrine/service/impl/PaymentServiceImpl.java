@@ -25,11 +25,11 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public Payment process(Long orderId, PaymentMethod method) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("Pedido não encontrado: " +
+                .orElseThrow(() -> new IllegalArgumentException("Order not found: " +
                         orderId));
 
         if (order.getStatus() != OrderStatus.PENDING) {
-            throw new IllegalStateException("Pedido não está disponível para pagamento.");
+            throw new IllegalStateException("Order is not available for payment.");
         }
 
         BigDecimal amount = order.getItems().stream()
