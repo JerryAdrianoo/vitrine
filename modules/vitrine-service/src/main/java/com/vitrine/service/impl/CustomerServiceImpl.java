@@ -20,12 +20,12 @@ public class CustomerServiceImpl implements CustomerService {
         customerRepository.findByEmail(
                 customer.getEmail())
                     .ifPresent(costumer -> {
-                        throw new IllegalArgumentException("E-mail already exists" + customer.getEmail());
+                        throw new IllegalArgumentException("E-mail already exists: " + customer.getEmail());
                     });
         customerRepository.findByCpf(
                 customer.getCpf())
                     .ifPresent(costumer -> {
-                        throw new IllegalArgumentException("CPF already exists" + customer.getCpf());
+                        throw new IllegalArgumentException("CPF already exists: " + customer.getCpf());
                     });
 
         customerRepository.save(customer);
