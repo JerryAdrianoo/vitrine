@@ -1,0 +1,1 @@
+ALTER TABLE customers ADD COLUMN password_hash VARCHAR(60) NOT NULL DEFAULT '';
