@@ -5,16 +5,19 @@ import com.vitrine.persistence.repository.impl.OrderRepositoryImpl;
 import com.vitrine.persistence.repository.impl.PaymentRepositoryImpl;
 import com.vitrine.persistence.repository.impl.ProductRepositoryImpl;
 import com.vitrine.persistence.repository.impl.StockRepositoryImpl;
+import com.vitrine.service.impl.AuthServiceImpl;
 import com.vitrine.service.impl.CustomerServiceImpl;
 import com.vitrine.service.impl.OrderServiceImpl;
 import com.vitrine.service.impl.PaymentServiceImpl;
 import com.vitrine.service.impl.ProductServiceImpl;
 import com.vitrine.web.exception.AppExceptionMapper;
 import com.vitrine.web.exception.ConstraintViolationExceptionMapper;
+import com.vitrine.web.resource.AuthResource;
 import com.vitrine.web.resource.CustomerResource;
 import com.vitrine.web.resource.OrderResource;
 import com.vitrine.web.resource.PaymentResource;
 import com.vitrine.web.resource.ProductResource;
+import com.vitrine.web.security.AuthFilter;
 import org.glassfish.jersey.server.ResourceConfig;
 
 public class AppConfig extends ResourceConfig {
@@ -28,6 +31,7 @@ public class AppConfig extends ResourceConfig {
         PaymentRepositoryImpl paymentRepository = new PaymentRepositoryImpl();
 
         CustomerServiceImpl customerService = new CustomerServiceImpl(customerRepository);
+        AuthServiceImpl authService = new AuthServiceImpl(customerRepository);
         ProductServiceImpl productService = new ProductServiceImpl(productRepository,
                 stockRepository);
         OrderServiceImpl orderService = new OrderServiceImpl(orderRepository,
@@ -39,8 +43,10 @@ public class AppConfig extends ResourceConfig {
         register(new ProductResource(productService));
         register(new OrderResource(orderService));
         register(new PaymentResource(paymentService));
+        register(new AuthResource(authService));
         register(JacksonConfig.class);
         register(AppExceptionMapper.class);
         register(ConstraintViolationExceptionMapper.class);
+        register(AuthFilter.class);
     }
 }

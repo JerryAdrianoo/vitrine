@@ -31,7 +31,16 @@ public class AppExceptionMapper implements ExceptionMapper<RuntimeException> {
                     .entity(Map.of("error", runtimeException.getMessage()))
                     .build();
         }
+
+        if (runtimeException instanceof SecurityException) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .type(MediaType.APPLICATION_JSON)
+                    .entity(Map.of("error", runtimeException.getMessage()))
+                    .build();
+        }
+
         logger.error("Unexpected error", runtimeException);
+
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                 .type(MediaType.APPLICATION_JSON)
                 .entity(Map.of("error", "Unexpected error"))
