@@ -114,3 +114,109 @@ toda a cadeia: repositórios → serviços → resources, e os registra no Jerse
 ### Rota base
 Todas as rotas têm prefixo `/api` (definido em `VitrineApplication` via `@ApplicationPath`).
 Exemplo: `POST /api/orders?customerId=1`
+
+---
+
+## Autenticação JWT (Fase 5)
+
+### Fluxo de autenticação
+1. Cliente envia `POST /api/auth/login` com `{ email, password }`
+2. `AuthServiceImpl` busca o customer por email e verifica a senha com BCrypt
+3. Se válido, `AuthResource` gera um JWT via `JwtUtil` e retorna `{ token }`
+4. O cliente inclui `Authorization: Bearer <token>` em todas as requisições seguintes
+5. `AuthFilter` intercepta as requisições `@Secured`, valida o token e aborta com 401 se inválido
+
+### Decisões de segurança
+- **Mesma mensagem para email/senha inválidos** (`"Invalid credentials"`) — evita enumeração de usuários
+- **BCrypt** para hash de senhas — resistente a rainbow tables e brute force
+- **JWT HS256** com chave de 256+ bits — assina e verifica sem consultar o banco
+- **Expiração de 1 hora** — tokens de longa duração são um risco se vazarem
+- **Chave secreta em código** — aceitável para desenvolvimento; em produção deve vir de variável de ambiente
+
+### Princípios aplicados
+- **SRP**: `AuthService` só autentica, `JwtUtil` só gera/valida token, `AuthFilter` só intercepta
+- **DIP**: `AuthResource` depende de `AuthService` (interface), não de `AuthServiceImpl`
+- **Separation of Concerns**: JWT é preocupação da camada web — `AuthService` não conhece JWT
+
+---
+
+## Plano do Projeto
+
+### Estado Atual
+
+| Fase | Status | Descrição |
+|------|--------|-----------|
+| Fase 1 — Domínio | ✅ Concluída | Modelos, enums, interfaces |
+| Fase 2 — Persistência + Serviço | ✅ Concluída | Hibernate, repositórios, services |
+| Fase 3 — Web | ✅ Concluída | JAX-RS, recursos, exception handling |
+| Fase 3b — Estabilização | ✅ Concluída | Bean Validation, Flyway, Logback |
+| Fase 4 — Testes Unitários | ✅ Concluída | JUnit 5 + Mockito, 10 testes |
+| Fase 5 — Segurança JWT | ✅ Concluída | JWT + BCrypt, AuthFilter, @Secured, testes atualizados, testado end-to-end |
+
+### Próximas Etapas Imediatas (Fase 6)
+
+1. `CategoryResource` — CRUD completo (hoje categorias só existem via SQL)
+2. Paginação nos endpoints de lista (`findAll`)
+3. `@Version` no `Stock` — Optimistic Locking para concorrência
+
+### Roadmap Médio Prazo (Fases 6–7)
+
+| Fase | Descrição |
+|------|-----------|
+| Fase 6a | `CategoryResource` — CRUD completo (hoje categorias só existem via SQL) |
+| Fase 6b | Paginação nos endpoints de lista (`findAll`) |
+| Fase 6c | `@Version` no `Stock` — Optimistic Locking para concorrência |
+| Fase 7a | Docker — containerizar app + MySQL |
+| Fase 7b | GitHub Actions — CI com build + testes |
+| Fase 7c | OpenAPI/Swagger — documentação automática dos endpoints |
+
+### Roadmap Longo Prazo (Fase 8+)
+
+| Fase | Descrição |
+|------|-----------|
+| Fase 8 | Testes de integração com Testcontainers + MySQL real |
+| Futuro | Migrar para Spring Boot — após Vitrine concluído, novo projeto para comparar |
+
+### Dívida Técnica
+
+| Item | Severidade | Quando resolver |
+|------|-----------|-----------------|
+| `SECRET` do JWT fixo no código | Alta | Antes de qualquer deploy — usar variável de ambiente |
+| `mysql-connector-j` como `implementation` (deveria ser `runtimeOnly`) | Baixa | Fase 7 (Docker/CI) |
+| Sem testes para `AuthServiceImpl` | Média | Fase 8 |
+| `CustomerResource.update` recebe `Customer` diretamente (sem DTO) | Média | Fase 6 — criar `CustomerUpdateRequest` sem campo `password` |
+
+---
+
+## Progresso do Aluno
+
+### Pontos Fortes
+- Raciocínio arquitetural sólido — entende separação de camadas sem decorar
+- Absorve conceitos de segurança rapidamente (JWT, BCrypt, enumeração de usuários)
+- Faz perguntas certas na hora certa (ex: "devo mover o V1 para o módulo correto?")
+- Aprende conectando conceito → código → impacto real
+- Entende padrões quando explicados e consegue aplicá-los com orientação
+
+### Gaps e Pontos a Reforçar
+- Modificadores de acesso: tendência a esquecer `final` e usar `public` em campos sensíveis
+- Imports desnecessários gerados por autocomplete
+- Nomenclatura: às vezes nomeia parâmetro com tipo errado (ex: `CustomerRequest customer`)
+- Single Responsibility Principle, Open/Closed Principle e demais princípios SOLID ainda não são reflexo automático
+
+### Erros Históricos Observados
+- Campo `public` quando deveria ser `private` (ex: `JwtUtil.KEY`)
+- Campo sem `final` em injeção por construtor (ex: `AuthResource.authService`)
+- `static` indevido em campo de instância
+- Arquivo Flyway com `v` minúsculo e underscore duplo no nome
+- Typo em string literal (`"Unauthorize"` em vez de `"Unauthorized"`)
+- Código de outro teste inserido dentro do teste errado
+
+### Padrões e Princípios Demonstrados
+- Repository Pattern, Poor Man's Dependency Injection, DTO Pattern
+- Single Responsibility Principle, Dependency Inversion Principle, Open/Closed Principle
+- Interceptor Pattern, Chain of Responsibility, Marker Annotation Pattern
+
+### Nível Atual
+**Júnior** (consolidado — evoluiu de Iniciante durante a Fase 5)
+Demonstra raciocínio arquitetural e absorve padrões com facilidade.
+O próximo passo é internalizar Clean Code e SOLID como reflexo automático, sem precisar ser lembrado.
