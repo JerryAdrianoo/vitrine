@@ -1,7 +1,9 @@
 package com.vitrine.web.resource;
 
+import com.vitrine.api.dto.CustomerRequest;
 import com.vitrine.api.model.Customer;
 import com.vitrine.api.service.CustomerService;
+import com.vitrine.web.security.Secured;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -16,7 +18,6 @@ import jakarta.ws.rs.core.Response;
 
 import java.util.List;
 
-
 @Path("/customers")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -29,16 +30,18 @@ public class CustomerResource {
     }
 
     @POST
-    public Response register(@Valid Customer customer) {
-        customerService.register(customer);
+    public Response register(@Valid CustomerRequest request) {
+        customerService.register(request);
         return Response.status(Response.Status.CREATED).build();
     }
 
+    @Secured
     @GET
     public List<Customer> findAll() {
         return customerService.findAll();
     }
 
+    @Secured
     @GET
     @Path("/{id}")
     public Response findById(@PathParam("id") Long id) {
@@ -47,6 +50,7 @@ public class CustomerResource {
                 .orElse(Response.status(Response.Status.NOT_FOUND).build());
     }
 
+    @Secured
     @PUT
     @Path("/{id}")
     public Response update(@PathParam("id") Long id, @Valid Customer customer) {
@@ -56,6 +60,7 @@ public class CustomerResource {
         return Response.noContent().build();
     }
 
+    @Secured
     @DELETE
     @Path("/{id}")
     public Response delete(@PathParam("id") Long id) {

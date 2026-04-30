@@ -4,6 +4,7 @@ import com.vitrine.api.model.Payment;
 import com.vitrine.api.model.PaymentMethod;
 import com.vitrine.api.service.PaymentService;
 import com.vitrine.web.mapper.PaymentMapperUtil;
+import com.vitrine.web.security.Secured;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -14,6 +15,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+@Secured
 @Path("/payments")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

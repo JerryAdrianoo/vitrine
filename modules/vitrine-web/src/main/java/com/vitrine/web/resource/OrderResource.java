@@ -4,6 +4,7 @@ import com.vitrine.api.model.Order;
 import com.vitrine.api.model.OrderItem;
 import com.vitrine.api.model.Product;
 import com.vitrine.api.service.OrderService;
+import com.vitrine.web.security.Secured;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -20,6 +21,7 @@ import com.vitrine.web.mapper.OrderMapperUtil;
 
 import java.util.List;
 
+@Secured
 @Path("/orders")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

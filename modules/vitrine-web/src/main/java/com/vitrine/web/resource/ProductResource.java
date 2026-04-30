@@ -2,6 +2,7 @@ package com.vitrine.web.resource;
 
 import com.vitrine.api.model.Product;
 import com.vitrine.api.service.ProductService;
+import com.vitrine.web.security.Secured;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -17,6 +18,7 @@ import jakarta.ws.rs.core.Response;
 
 import java.util.List;
 
+@Secured
 @Path("/products")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
