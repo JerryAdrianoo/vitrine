@@ -1,5 +1,7 @@
 package com.vitrine.service.impl;
 
+import at.favre.lib.crypto.bcrypt.BCrypt;
+import com.vitrine.api.dto.CustomerRequest;
 import com.vitrine.api.model.Customer;
 import com.vitrine.api.repository.CustomerRepository;
 import com.vitrine.api.service.CustomerService;
@@ -20,17 +22,27 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public void register(Customer customer) {
-        customerRepository.findByEmail(customer.getEmail())
+    public void register(CustomerRequest request) {
+        customerRepository.findByEmail(request.getEmail())
                 .ifPresent(c -> {
-                    logger.warn("Registration rejected — email already exists: {}", customer.getEmail());
-                    throw new IllegalArgumentException("E-mail already exists: " + customer.getEmail());
+                    logger.warn("Registration rejected — email already exists: {}", request.getEmail());
+                    throw new IllegalArgumentException("E-mail already exists: " + request.getEmail());
                 });
-        customerRepository.findByCpf(customer.getCpf())
+        customerRepository.findByCpf(request.getCpf())
                 .ifPresent(c -> {
-                    logger.warn("Registration rejected — CPF already exists: {}", customer.getCpf());
-                    throw new IllegalArgumentException("CPF already exists: " + customer.getCpf());
+                    logger.warn("Registration rejected — CPF already exists: {}", request.getCpf());
+                    throw new IllegalArgumentException("CPF already exists: " + request.getCpf());
                 });
+
+        String hash = BCrypt.withDefaults()
+                .hashToString(12, request.getPassword().toCharArray());
+
+        Customer customer = new Customer();
+        customer.setName(request.getName());
+        customer.setEmail(request.getEmail());
+        customer.setCpf(request.getCpf());
+        customer.setAddress(request.getAddress());
+        customer.setPasswordHash(hash);
 
         customerRepository.save(customer);
         logger.info("Customer registered: {}", customer.getEmail());
