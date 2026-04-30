@@ -34,6 +34,10 @@ public class Customer {
 
     private String address;
 
+    @NotBlank
+    @Column(name = "password_hash", nullable = false)
+    private String passwordHash;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -48,4 +52,12 @@ public class Customer {
 
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
+
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
 }
