@@ -1,5 +1,6 @@
 package com.vitrine.service.impl;
 
+import com.vitrine.api.dto.CustomerRequest;
 import com.vitrine.api.model.Customer;
 import com.vitrine.api.repository.CustomerRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,52 +29,52 @@ public class CustomerServiceImplTest {
 
     @Test
     public void registerHappyPathSavesCustomer() {
-        Customer customer = buildCustomer("test@email.com", "12345678901");
+        CustomerRequest request = buildRequest("test@email.com", "12345678901");
 
-        when(customerRepository.findByEmail(customer.getEmail())).thenReturn(Optional.empty());
-        when(customerRepository.findByCpf(customer.getCpf())).thenReturn(Optional.empty());
+        when(customerRepository.findByEmail(request.getEmail())).thenReturn(Optional.empty());
+        when(customerRepository.findByCpf(request.getCpf())).thenReturn(Optional.empty());
 
-        customerService.register(customer);
+        customerService.register(request);
 
-        verify(customerRepository).save(customer);
+        verify(customerRepository).save(any(Customer.class));
     }
 
     @Test
     public void registerDuplicatedEmailThrowsException() {
-        Customer customer = buildCustomer("test@email.com", "12345678901");
+        CustomerRequest request = buildRequest("test@email.com", "12345678901");
 
-        when(customerRepository.findByEmail(customer.getEmail())).thenReturn(Optional.of(customer));
+        when(customerRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(new Customer()));
 
         IllegalArgumentException illegalArgumentException = assertThrows(IllegalArgumentException.class,
-                () -> customerService.register(customer)
+                () -> customerService.register(request)
         );
 
-        assertTrue(illegalArgumentException.getMessage().contains(customer.getEmail()));
+        assertTrue(illegalArgumentException.getMessage().contains(request.getEmail()));
         verify(customerRepository, never()).save(any());
     }
 
     @Test
     public void registerDuplicatedCPFThrowsException() {
-        Customer customer = buildCustomer("test@email.com", "12345678901");
+        CustomerRequest request = buildRequest("test@email.com", "12345678901");
 
-        when(customerRepository.findByEmail(customer.getEmail())).thenReturn(Optional.empty());
-        when(customerRepository.findByCpf(customer.getCpf())).thenReturn(Optional.of(customer));
+        when(customerRepository.findByEmail(request.getEmail())).thenReturn(Optional.empty());
+        when(customerRepository.findByCpf(request.getCpf())).thenReturn(Optional.of(new Customer()));
 
         IllegalArgumentException illegalArgumentException = assertThrows(IllegalArgumentException.class,
-                () -> customerService.register(customer)
+                () -> customerService.register(request)
         );
 
-        assertTrue(illegalArgumentException.getMessage().contains(customer.getCpf()));
+        assertTrue(illegalArgumentException.getMessage().contains(request.getCpf()));
         verify(customerRepository, never()).save(any());
     }
 
-    private Customer buildCustomer(String email, String cpf) {
-        Customer customer = new Customer();
-        customer.setName("Test");
-        customer.setEmail(email);
-        customer.setCpf(cpf);
-        customer.setAddress("Street A, 123");
-
-        return customer;
+    private CustomerRequest buildRequest(String email, String cpf) {
+        CustomerRequest request = new CustomerRequest();
+        request.setName("Test");
+        request.setEmail(email);
+        request.setCpf(cpf);
+        request.setAddress("Street A, 123");
+        request.setPassword("password123");
+        return request;
     }
 }
