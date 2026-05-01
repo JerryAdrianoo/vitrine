@@ -1,5 +1,6 @@
 package com.vitrine.web.exception;
 
+import jakarta.persistence.OptimisticLockException;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -44,6 +45,13 @@ public class AppExceptionMapper implements ExceptionMapper<RuntimeException> {
             return Response.status(Response.Status.NOT_FOUND)
                     .type(MediaType.APPLICATION_JSON)
                     .entity(Map.of("error", runtimeException.getMessage()))
+                    .build();
+        }
+
+        if (runtimeException instanceof OptimisticLockException) {
+            return Response.status(Response.Status.CONFLICT)
+                    .type(MediaType.APPLICATION_JSON)
+                    .entity(Map.of("error", "Stock was modified by another request. Please try again."))
                     .build();
         }
 

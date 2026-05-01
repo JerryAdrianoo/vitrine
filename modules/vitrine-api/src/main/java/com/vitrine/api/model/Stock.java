@@ -17,6 +17,14 @@ public class Stock {
     @Column(nullable = false)
     private Integer quantity;
 
+    @Version
+    @Column(nullable = false)
+    private Integer version;
+
+    public Integer getVersion() {
+        return version;
+    }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
