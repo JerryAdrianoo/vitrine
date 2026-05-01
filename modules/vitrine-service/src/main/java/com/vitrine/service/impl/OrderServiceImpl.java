@@ -1,5 +1,6 @@
 package com.vitrine.service.impl;
 
+import com.vitrine.api.dto.PageResponse;
 import com.vitrine.api.model.Customer;
 import com.vitrine.api.model.Order;
 import com.vitrine.api.model.OrderItem;
@@ -82,6 +83,14 @@ public class OrderServiceImpl implements OrderService {
     public List<Order> findByCustomer(Long customerId) {
         return orderRepository.findByCustomerId(customerId);
     }
+
+    @Override
+    public PageResponse<Order> findAllPaginated(int page, int size) {
+        List<Order> items = orderRepository.findAllPaginated(page, size);
+        long total = orderRepository.countAll();
+        return new PageResponse<>(items, page, size, total);
+    }
+
 
     @Override
     public void cancel(Long orderId) {

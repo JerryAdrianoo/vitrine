@@ -2,6 +2,7 @@ package com.vitrine.service.impl;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.vitrine.api.dto.CustomerRequest;
+import com.vitrine.api.dto.PageResponse;
 import com.vitrine.api.model.Customer;
 import com.vitrine.api.repository.CustomerRepository;
 import com.vitrine.api.service.CustomerService;
@@ -62,6 +63,14 @@ public class CustomerServiceImpl implements CustomerService {
     public List<Customer> findAll() {
         return customerRepository.findAll();
     }
+
+    @Override
+    public PageResponse<Customer> findAllPaginated(int page, int size) {
+        List<Customer> items = customerRepository.findAllPaginated(page, size);
+        long total = customerRepository.countAll();
+        return new PageResponse<>(items, page, size, total);
+    }
+
 
     @Override
     public void update(Customer customer) {

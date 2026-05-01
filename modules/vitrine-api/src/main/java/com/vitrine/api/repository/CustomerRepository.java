@@ -10,6 +10,8 @@ public interface CustomerRepository {
     Optional<Customer> findByEmail(String email);
     Optional<Customer> findByCpf(String cpf);
     List<Customer> findAll();
+    List<Customer> findAllPaginated(int page, int size);
+    long countAll();
     void save(Customer customer);
     void update(Customer customer);
     void delete(Long id);

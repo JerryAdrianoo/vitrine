@@ -9,6 +9,8 @@ public interface ProductRepository {
     Optional<Product> findById(Long id);
     List<Product> findByCategory(Long categoryId);
     List<Product> findAll();
+    List<Product> findAllPaginated(int page, int size);
+    long countAll();
     void save(Product product);
     void update(Product product);
     void delete(Long id);

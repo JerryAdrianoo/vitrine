@@ -43,6 +43,33 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     @Override
+    public List<Product> findAllPaginated(int page, int size) {
+        EntityManager em = HibernateUtil.createEntityManager();
+
+        int offset = page * size;
+        try {
+            return em.createQuery("SELECT p FROM Product p", Product.class)
+                    .setFirstResult(offset)
+                    .setMaxResults(size)
+                    .getResultList();
+        } finally {
+            em.close();
+        }
+    }
+
+    @Override
+    public long countAll() {
+        EntityManager em = HibernateUtil.createEntityManager();
+
+        try {
+            return em.createQuery("SELECT COUNT(p) FROM Product p", Long.class)
+                    .getSingleResult();
+        } finally {
+            em.close();
+        }
+    }
+
+    @Override
     public void save(Product product) {
         EntityManager em = HibernateUtil.createEntityManager();
         try {

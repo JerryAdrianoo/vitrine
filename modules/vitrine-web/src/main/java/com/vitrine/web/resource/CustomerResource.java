@@ -7,16 +7,16 @@ import com.vitrine.web.security.Secured;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-
-import java.util.List;
 
 @Path("/customers")
 @Produces(MediaType.APPLICATION_JSON)
@@ -37,8 +37,8 @@ public class CustomerResource {
 
     @Secured
     @GET
-    public List<Customer> findAll() {
-        return customerService.findAll();
+    public Response findAll(@QueryParam("page") @DefaultValue("0") int page, @QueryParam("size") @DefaultValue("10") int size) {
+        return Response.ok(customerService.findAllPaginated(page, size)).build();
     }
 
     @Secured

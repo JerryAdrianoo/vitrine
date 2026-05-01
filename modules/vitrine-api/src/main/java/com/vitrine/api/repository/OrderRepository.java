@@ -9,6 +9,8 @@ public interface OrderRepository {
     Optional<Order> findById(Long id);
     List<Order> findByCustomerId(Long customerId);
     List<Order> findAll();
+    List<Order> findAllPaginated(int page, int size);
+    long countAll();
     void save(Order order);
     void update(Order order);
 }

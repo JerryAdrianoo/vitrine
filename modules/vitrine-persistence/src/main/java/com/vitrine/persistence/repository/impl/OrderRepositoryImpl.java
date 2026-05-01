@@ -57,6 +57,33 @@ public class OrderRepositoryImpl implements OrderRepository {
     }
 
     @Override
+    public List<Order> findAllPaginated(int page, int size) {
+        EntityManager em = HibernateUtil.createEntityManager();
+
+        int offset = page * size;
+        try {
+            return em.createQuery("SELECT p FROM Order p", Order.class)
+                    .setFirstResult(offset)
+                    .setMaxResults(size)
+                    .getResultList();
+        } finally {
+            em.close();
+        }
+    }
+
+    @Override
+    public long countAll() {
+        EntityManager em = HibernateUtil.createEntityManager();
+
+        try {
+            return em.createQuery("SELECT COUNT(p) FROM Order p", Long.class)
+                    .getSingleResult();
+        } finally {
+            em.close();
+        }
+    }
+
+    @Override
     public void save(Order order) {
         EntityManager em = HibernateUtil.createEntityManager();
         try {

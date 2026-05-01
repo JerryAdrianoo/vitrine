@@ -64,6 +64,33 @@ public class CustomerRepositoryImpl implements CustomerRepository {
     }
 
     @Override
+    public List<Customer> findAllPaginated(int page, int size) {
+        EntityManager em = HibernateUtil.createEntityManager();
+
+        int offset = page * size;
+        try {
+            return em.createQuery("SELECT p FROM Customer p", Customer.class)
+                    .setFirstResult(offset)
+                    .setMaxResults(size)
+                    .getResultList();
+        } finally {
+            em.close();
+        }
+    }
+
+    @Override
+    public long countAll() {
+        EntityManager em = HibernateUtil.createEntityManager();
+
+        try {
+            return em.createQuery("SELECT COUNT(p) FROM Customer p", Long.class)
+                    .getSingleResult();
+        } finally {
+            em.close();
+        }
+    }
+
+    @Override
     public void save(Customer customer) {
         EntityManager em = HibernateUtil.createEntityManager();
         try {

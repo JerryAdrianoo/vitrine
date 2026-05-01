@@ -1,5 +1,6 @@
 package com.vitrine.api.service;
 
+import com.vitrine.api.dto.PageResponse;
 import com.vitrine.api.model.Product;
 
 import java.util.List;
@@ -10,6 +11,7 @@ public interface ProductService {
     Optional<Product> findById(Long id);
     List<Product> findByCategory(Long categoryId);
     List<Product> findAll();
+    PageResponse<Product> findAllPaginated(int page, int size);
     void update(Product product);
     void delete(Long id);
 }

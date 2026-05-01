@@ -6,6 +6,7 @@ import com.vitrine.web.security.Secured;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
@@ -23,7 +24,7 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class ProductResource {
-    public final ProductService productService;
+    private final ProductService productService;
 
     public ProductResource(ProductService productService) {
         this.productService = productService;
@@ -36,8 +37,8 @@ public class ProductResource {
     }
 
     @GET
-    public List<Product> findAll() {
-        return productService.findAll();
+    public Response findAll(@QueryParam("page") @DefaultValue("0") int page, @QueryParam("size") @DefaultValue("10") int size) {
+        return Response.ok(productService.findAllPaginated(page, size)).build();
     }
 
     @GET

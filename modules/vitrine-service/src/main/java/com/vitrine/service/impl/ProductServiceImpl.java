@@ -1,5 +1,6 @@
 package com.vitrine.service.impl;
 
+import com.vitrine.api.dto.PageResponse;
 import com.vitrine.api.model.Product;
 import com.vitrine.api.model.Stock;
 import com.vitrine.api.repository.ProductRepository;
@@ -53,6 +54,13 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public List<Product> findAll() {
         return productRepository.findAll();
+    }
+
+    @Override
+    public PageResponse<Product> findAllPaginated(int page, int size) {
+        List<Product> items = productRepository.findAllPaginated(page, size);
+        long total = productRepository.countAll();
+        return new PageResponse<>(items, page, size, total);
     }
 
     @Override

@@ -7,6 +7,7 @@ import com.vitrine.api.service.OrderService;
 import com.vitrine.web.security.Secured;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -50,6 +51,11 @@ public class OrderResource {
         return Response.status(Response.Status.CREATED)
                 .entity(OrderMapperUtil.toResponse(order))
                 .build();
+    }
+
+    @GET
+    public Response findAll(@QueryParam("page") @DefaultValue("0") int page, @QueryParam("size") @DefaultValue("10") int size) {
+        return Response.ok(orderService.findAllPaginated(page, size)).build();
     }
 
     @GET
