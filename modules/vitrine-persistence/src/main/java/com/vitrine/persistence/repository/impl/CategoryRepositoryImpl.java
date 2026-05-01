@@ -5,6 +5,7 @@ import com.vitrine.api.repository.CategoryRepository;
 import com.vitrine.persistence.util.HibernateUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
+import org.hibernate.exception.ConstraintViolationException;
 
 import java.util.List;
 import java.util.Optional;
@@ -42,6 +43,33 @@ public class CategoryRepositoryImpl implements CategoryRepository {
         EntityManager em = HibernateUtil.createEntityManager();
         try {
             return em.createQuery("SELECT c FROM Category c", Category.class).getResultList();
+        } finally {
+            em.close();
+        }
+    }
+
+    @Override
+    public List<Category> findAllPaginated(int page, int size) {
+        EntityManager em = HibernateUtil.createEntityManager();
+
+        try{
+            return em.createQuery("SELECT c FROM Category c ORDER BY c.name ASC", Category.class)
+                    .setFirstResult(page * size)
+                    .setMaxResults(size)
+                    .getResultList();
+        }
+        finally {
+            em.close();
+        }
+    }
+
+    @Override
+    public long countAll() {
+        EntityManager em = HibernateUtil.createEntityManager();
+
+        try {
+            return em.createQuery("SELECT COUNT(c) FROM Category c", Long.class)
+                    .getSingleResult();
         } finally {
             em.close();
         }
@@ -89,6 +117,10 @@ public class CategoryRepositoryImpl implements CategoryRepository {
             em.getTransaction().commit();
         } catch (Exception e) {
             em.getTransaction().rollback();
+
+            if (e.getCause() instanceof ConstraintViolationException) {
+                throw new IllegalStateException("Category has associated products and cannot be deleted");
+            }
             throw e;
         } finally {
             em.close();

@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 @Provider
 public class AppExceptionMapper implements ExceptionMapper<RuntimeException> {
@@ -34,6 +35,13 @@ public class AppExceptionMapper implements ExceptionMapper<RuntimeException> {
 
         if (runtimeException instanceof SecurityException) {
             return Response.status(Response.Status.UNAUTHORIZED)
+                    .type(MediaType.APPLICATION_JSON)
+                    .entity(Map.of("error", runtimeException.getMessage()))
+                    .build();
+        }
+
+        if (runtimeException instanceof NoSuchElementException) {
+            return Response.status(Response.Status.NOT_FOUND)
                     .type(MediaType.APPLICATION_JSON)
                     .entity(Map.of("error", runtimeException.getMessage()))
                     .build();
