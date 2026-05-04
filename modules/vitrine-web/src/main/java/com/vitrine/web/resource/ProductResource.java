@@ -17,8 +17,12 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 
+@Tag(name = "Products", description = "Product management")
 @Secured
 @Path("/products")
 @Produces(MediaType.APPLICATION_JSON)
@@ -30,17 +34,37 @@ public class ProductResource {
         this.productService = productService;
     }
 
+    @Operation(
+            summary = "Register a new product",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Product registered successfully"),
+                    @ApiResponse(responseCode = "400", description = "Invalid input")
+            }
+    )
     @POST
     public Response register(@QueryParam("initialStock") int initialStock, @Valid Product product) {
         productService.register(product, initialStock);
         return Response.status(Response.Status.CREATED).build();
     }
 
+    @Operation(
+            summary = "List all products",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Products retrieved successfully")
+            }
+    )
     @GET
     public Response findAll(@QueryParam("page") @DefaultValue("0") int page, @QueryParam("size") @DefaultValue("10") int size) {
         return Response.ok(productService.findAllPaginated(page, size)).build();
     }
 
+    @Operation(
+            summary = "Find product by ID",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Product found"),
+                    @ApiResponse(responseCode = "404", description = "Product not found")
+            }
+    )
     @GET
     @Path("/{id}")
     public Response findById(@PathParam("id") Long id) {
@@ -49,12 +73,26 @@ public class ProductResource {
                 .orElse(Response.status(Response.Status.NOT_FOUND).build());
     }
 
+    @Operation(
+            summary = "Find products by category",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Products retrieved successfully")
+            }
+    )
     @GET
     @Path("/category/{categoryId}")
     public List<Product> findByCategory(@PathParam("categoryId") Long categoryId) {
         return productService.findByCategory(categoryId);
     }
 
+    @Operation(
+            summary = "Update product",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "Product updated successfully"),
+                    @ApiResponse(responseCode = "400", description = "Invalid input"),
+                    @ApiResponse(responseCode = "404", description = "Product not found")
+            }
+    )
     @PUT
     @Path("/{id}")
     public Response update(@PathParam("id") Long id, @Valid Product product) {
@@ -63,6 +101,13 @@ public class ProductResource {
         return Response.noContent().build();
     }
 
+    @Operation(
+            summary = "Delete product",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "Product deleted successfully"),
+                    @ApiResponse(responseCode = "404", description = "Product not found")
+            }
+    )
     @DELETE
     @Path("/{id}")
     public Response delete(@PathParam("id") Long id) {

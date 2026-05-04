@@ -19,9 +19,12 @@ import jakarta.ws.rs.core.Response;
 import com.vitrine.api.dto.OrderItemRequest;
 import com.vitrine.api.dto.OrderResponse;
 import com.vitrine.web.mapper.OrderMapperUtil;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 
+@Tag(name = "Orders", description = "Order management")
 @Secured
 @Path("/orders")
 @Produces(MediaType.APPLICATION_JSON)
@@ -33,6 +36,14 @@ public class OrderResource {
         this.orderService = orderService;
     }
 
+    @Operation(
+            summary = "Place a new order",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Order placed successfully"),
+                    @ApiResponse(responseCode = "400", description = "Invalid input"),
+                    @ApiResponse(responseCode = "404", description = "Customer or product not found")
+            }
+    )
     @POST
     public Response placeOrder(@QueryParam("customerId") Long customerId,@Valid List<OrderItemRequest> items) {
         List<OrderItem> orderItems = items.stream()
@@ -53,11 +64,24 @@ public class OrderResource {
                 .build();
     }
 
+    @Operation(
+            summary = "List all orders",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Orders retrieved successfully")
+            }
+    )
     @GET
     public Response findAll(@QueryParam("page") @DefaultValue("0") int page, @QueryParam("size") @DefaultValue("10") int size) {
         return Response.ok(orderService.findAllPaginated(page, size)).build();
     }
 
+    @Operation(
+            summary = "Find order by ID",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Order found"),
+                    @ApiResponse(responseCode = "404", description = "Order not found")
+            }
+    )
     @GET
     @Path("/{id}")
     public Response findById(@PathParam("id") Long id) {
@@ -66,6 +90,12 @@ public class OrderResource {
                 .orElse(Response.status(Response.Status.NOT_FOUND).build());
     }
 
+    @Operation(
+            summary = "Find orders by customer",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Orders retrieved successfully")
+            }
+    )
     @GET
     @Path("/customer/{customerId}")
     public List<OrderResponse> findByCustomer(@PathParam("customerId") Long customerId) {
@@ -74,6 +104,13 @@ public class OrderResource {
                 .toList();
     }
 
+    @Operation(
+            summary = "Cancel order",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "Order cancelled successfully"),
+                    @ApiResponse(responseCode = "404", description = "Order not found")
+            }
+    )
     @POST
     @Path("/{id}/cancel")
     public Response cancel(@PathParam("id") Long id) {
