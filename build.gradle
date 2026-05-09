@@ -1,8 +1,8 @@
-group = 'com.vitrine'
-version = '1.0-SNAPSHOT'
-
 subprojects {
     apply plugin: 'java'
+
+    group = 'com.vitrine'
+    version = '1.0-SNAPSHOT'
 
     repositories {
         mavenCentral()

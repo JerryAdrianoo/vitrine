@@ -1,0 +1,65 @@
+# ============================================================
+# Outputs de build do Gradle
+# ============================================================
+# Cache de dependências baixadas e estado interno do Gradle.
+# Pode chegar a centenas de MB. Não interessa pro build do Docker.
+.gradle/
+
+# Artefatos compilados em qualquer módulo (build/libs, build/classes...).
+# A imagem vai gerar os seus próprios dentro do builder stage.
+**/build/
+# ============================================================
+# IDEs
+# ============================================================
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+out/
+
+# ============================================================
+# Git
+# ============================================================
+# A imagem não precisa do histórico .git para rodar.
+# Filtrar reduz contexto e evita vazar branches/commits.
+.git/
+.gitignore
+.gitattributes
+
+# ============================================================
+# Sistema operacional
+# ============================================================
+.DS_Store
+Thumbs.db
+
+# ============================================================
+# Credenciais — NUNCA dentro da imagem
+# ============================================================
+# Em Docker, credenciais vêm de env vars (definidas no docker-compose.yml).
+# Se este arquivo entrasse na imagem, qualquer um com acesso à imagem
+# (registry, dump) conseguiria ler usuário/senha do banco.
+**/database.properties
+
+# ============================================================
+# Docker e documentação
+# ============================================================
+# Dockerfile/compose já são lidos pelo Docker fora do contexto da imagem.
+# Não precisam ser COPIADOS pra dentro do build context.
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Documentação não roda em produção.
+*.md
+
+# ============================================================
+# Configs de Claude Code (não fazem parte do app)
+# ============================================================
+.claude/
+
+# ============================================================
+# Logs e arquivos temporários
+# ============================================================
+*.log
+*.tmp
