@@ -21,8 +21,18 @@ import com.vitrine.web.resource.OrderResource;
 import com.vitrine.web.resource.PaymentResource;
 import com.vitrine.web.resource.ProductResource;
 import com.vitrine.web.security.AuthFilter;
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.info.Info;
 import org.glassfish.jersey.server.ResourceConfig;
+import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
 
+@OpenAPIDefinition(
+        info = @Info(
+                title = "Vitrine API",
+                version = "1.0",
+                description = "E-commerce API of Vitrine's project"
+        )
+)
 public class AppConfig extends ResourceConfig {
 
     public AppConfig() {
@@ -54,5 +64,6 @@ public class AppConfig extends ResourceConfig {
         register(AppExceptionMapper.class);
         register(ConstraintViolationExceptionMapper.class);
         register(AuthFilter.class);
+        register(OpenApiResource.class);
     }
 }

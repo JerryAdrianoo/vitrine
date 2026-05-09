@@ -12,8 +12,12 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Map;
 
+@Tag(name = "Auth", description = "Authentication")
 @Path("/auth")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -25,6 +29,13 @@ public class AuthResource {
         this.authService = authService;
     }
 
+    @Operation(
+            summary = "Authenticate and get JWT token",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Authentication successful — returns JWT token"),
+                    @ApiResponse(responseCode = "401", description = "Invalid credentials")
+            }
+    )
     @POST
     @Path("/login")
     public Response login(@Valid LoginRequest request) {
