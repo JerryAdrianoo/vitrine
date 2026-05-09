@@ -1,0 +1,54 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: vitrine-mysql
+    restart: unless-stopped
+    environment:
+      # Senha do root — usada só para criar/migrar. A app usa o usuário "vitrine".
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpass}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-vitrine}
+      MYSQL_USER: ${MYSQL_USER:-vitrine}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-vitrinepass}
+    ports:
+      # Expor MySQL no host é útil em dev (conectar com cliente SQL local).
+      # Mapeamos host:3307 → container:3306 para evitar conflito com um MySQL
+      # já instalado no Windows que costuma ocupar a 3306.
+      # A app dentro da rede Docker NÃO usa essa porta — ela acessa via `mysql:3306`.
+      # Em produção real essa porta normalmente NÃO é exposta.
+      - "3307:3306"
+    volumes:
+      # Volume nomeado: dados sobrevivem a `docker compose down`.
+      # Para zerar o banco: `docker compose down -v` (-v apaga os volumes).
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      # mysqladmin ping retorna 0 quando o servidor aceita conexões.
+      # MySQL pode levar 10-30s para ficar pronto na primeira inicialização.
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-rootpass}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vitrine-app
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      # Note "mysql" como hostname — é o nome do service acima.
+      # Docker Compose cria uma rede interna onde os services se enxergam pelo nome.
+      DB_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-vitrine}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USER: ${MYSQL_USER:-vitrine}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-vitrinepass}
+      # JWT_SECRET sai do código e vira segredo de ambiente.
+      # Em produção: gerar via `openssl rand -base64 64` e injetar via secret manager.
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-prod-this-is-only-for-local-development-32bytes-min}
+    ports:
+      - "8080:8080"
+
+volumes:
+  mysql-data:
