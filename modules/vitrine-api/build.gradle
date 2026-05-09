@@ -1,4 +1,8 @@
 dependencies {
     implementation 'jakarta.persistence:jakarta.persistence-api:3.2.0'
     implementation 'jakarta.validation:jakarta.validation-api:3.0.2'
+    // Apenas as annotations (@JsonIgnore etc) — a serialização Jackson em si vem
+    // pelo módulo `vitrine-web` via Jersey. compileOnly evita arrastar a lib
+    // inteira para módulos que só consomem o contrato.
+    compileOnly 'com.fasterxml.jackson.core:jackson-annotations:2.17.2'
 }
