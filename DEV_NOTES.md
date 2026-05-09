@@ -140,6 +140,151 @@ Exemplo: `POST /api/orders?customerId=1`
 
 ---
 
+## Paginação (Fase 6b)
+
+### Convenção dos endpoints `findAll`
+Todos os endpoints de lista aceitam `?page=0&size=20` (query params, defaults razoáveis) e devolvem
+um `PageResponse<T>` em vez de `List<T>`.
+
+### `PageResponse<T>` — formato de resposta
+```json
+{
+  "content": [...],
+  "page": 0,
+  "size": 20,
+  "totalElements": 137
+}
+```
+Genérico (`<T>`) para reaproveitar entre `Customer`, `Product`, `Category`, `Order` etc.
+Fica em `vitrine-api` para que a camada de serviço também devolva `PageResponse`.
+
+### Fluxo entre camadas
+- **Repositório**: dois métodos — `findAll(int page, int size)` (com `setFirstResult`/`setMaxResults`)
+  e `count()` (devolve `Long` — `COUNT(e)` no JPQL).
+- **Serviço**: chama os dois e monta o `PageResponse`.
+- **Resource**: passa `page`/`size` adiante e devolve o `PageResponse` direto.
+
+### Decisões
+- Não usar `Pageable` do Spring — o projeto é sem Spring, e o tipo nativo `PageResponse` mantém
+  o contrato explícito.
+- `totalElements` é `Long` (não `int`) — tabelas grandes podem ultrapassar `Integer.MAX_VALUE`.
+- Defaults `page=0`, `size=20` — evita listas sem fim quando o cliente esquece dos parâmetros.
+
+---
+
+## Optimistic Locking (Fase 6c)
+
+### Por que `Stock` precisa de `@Version`
+Estoque é o ponto de maior contenção: vários pedidos competindo pela mesma linha. Sem controle
+de concorrência, dois pedidos paralelos podem ler `quantity=1`, ambos reservar e gerar `quantity=-1`.
+
+### Como funciona
+```java
+@Version
+private Long version;
+```
+A cada `UPDATE`, o Hibernate adiciona `WHERE version = ?` e incrementa o campo. Se outra
+transação já atualizou a linha, o `WHERE` não bate, 0 linhas afetadas, e o Hibernate dispara
+`OptimisticLockException`.
+
+### Optimistic vs Pessimistic
+- **Optimistic** (escolhido): assume que conflitos são raros. Não trava linhas. Mais escalável.
+  Quem perde a corrida recebe exceção e pode tentar de novo.
+- **Pessimistic** (`SELECT ... FOR UPDATE`): trava a linha durante toda a transação. Garante
+  exclusividade, mas serializa o acesso e pode gerar deadlocks.
+
+Para e-commerce com muitas leituras e poucas escritas concorrentes na mesma linha, optimistic
+é a escolha padrão.
+
+### Tratamento da exceção
+`AppExceptionMapper` converte `OptimisticLockException` em `409 CONFLICT` com mensagem clara
+("Resource was modified by another transaction. Please retry."). O cliente decide se tenta
+de novo.
+
+---
+
+## OpenAPI / Swagger (Fase 7c)
+
+### Stack
+- `swagger-jaxrs2` (Swagger Core) — gera a especificação OpenAPI 3 a partir das anotações JAX-RS.
+- `OpenApiResource` registrado em `AppConfig` — expõe `/api/openapi.json` e `/api/openapi.yaml`.
+
+### Anotações usadas
+- `@Operation(summary = "...", description = "...")` — descreve o endpoint.
+- `@ApiResponse(responseCode = "...", description = "...")` — documenta cada possível resposta.
+- `@Parameter` — descreve query/path params quando o nome não é auto-explicativo.
+- `@Tag` (no nível da resource class) — agrupa endpoints na UI por domínio.
+
+### Decisão: anotar manualmente, não gerar do código
+O Swagger Core consegue inferir muita coisa, mas anotar explicitamente força o aluno a pensar
+no contrato da API (códigos de erro, exemplos, descrições). Documentação não é só para o cliente —
+é também uma forma de revisar o próprio design.
+
+---
+
+## Docker (Fase 7a)
+
+### Multi-stage build
+O `Dockerfile` usa duas stages para separar build de runtime:
+- **builder** (`eclipse-temurin:21-jdk`): compila o projeto e gera o `.war`.
+- **runtime** (`tomcat:10.1-jre21`): só copia o `.war` para `webapps/ROOT.war` e roda o Catalina.
+
+Imagem final fica enxuta — só JRE + Tomcat + a app, sem Gradle nem código-fonte.
+Renomear o `.war` para `ROOT.war` faz a app responder em `/api/...` na raiz, em vez de
+`/vitrine-web-1.0-SNAPSHOT/api/...`.
+
+### Cache de dependências
+A ordem dos `COPY` no Dockerfile é deliberada: primeiro `gradlew`, `gradle/`, `settings.gradle`
+e os `build.gradle` de cada módulo, e *só depois* o `modules/` com o código-fonte. Quando você
+muda só código (não build.gradle), o Docker reaproveita as layers anteriores e pula o
+`./gradlew dependencies` — economiza minutos no rebuild.
+
+### Externalized Configuration (12-Factor App #3)
+`HibernateUtil` e `JwtUtil` agora seguem a ordem de prioridade
+**env var → `database.properties` → default**:
+- Em **dev local**: `database.properties` no classpath fornece os valores.
+- Em **container**: o arquivo é excluído pelo `.dockerignore`, e os valores vêm do
+  `docker-compose.yml` via env vars (`DB_URL`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`).
+- **Defaults sensatos** cobrem casos onde nem env nem property estão presentes
+  (`com.mysql.cj.jdbc.Driver`, `validate`, `CamelCaseToUnderscoresNamingStrategy`).
+
+Princípio: **credenciais e config de ambiente nunca dentro da imagem**. Quem rodar a imagem
+em produção injeta os valores via secret manager / variável de ambiente. A imagem em si é
+o mesmo artefato em dev, staging e prod.
+
+### Healthcheck e ordem de inicialização
+O `mysql` define um healthcheck (`mysqladmin ping`); o `app` declara
+`depends_on: { mysql: { condition: service_healthy } }`. Resultado: o app só sobe quando o
+MySQL está aceitando conexões, evitando o crash clássico de "connection refused" no boot.
+`start_period: 30s` dá folga para a primeira inicialização do MySQL (cria `mysql.user`,
+indexa, etc).
+
+### `.dockerignore`
+Filtra o que não vai pro build context: `.gradle/`, `**/build/`, `.git/`, `.idea/`,
+`**/database.properties`, `*.md`, `.claude/`. Reduz o tempo de envio do contexto e impede
+que credenciais ou IDE configs vazem para a imagem.
+
+### Conflito de porta no host
+`mysql` mapeia `host:3307 → container:3306` (e não 3306:3306) para evitar conflito com
+um MySQL local instalado no Windows que costuma ocupar a 3306. **A app dentro da rede Docker
+NÃO usa essa porta** — ela acessa o banco via `mysql:3306` no DNS interno do compose.
+A porta exposta serve só para conectar com cliente SQL externo (DBeaver/Workbench).
+
+### Gotcha — `gradlew` com CRLF
+Em projeto clonado no Windows, o `gradlew` costuma vir com line endings CRLF. No Linux do
+container, o shebang `#!/bin/sh\r` aponta para um interpretador chamado `sh\r` que não existe,
+e `RUN ./gradlew ...` falha com `not found` (mensagem enganosa — o arquivo existe; o
+interpretador é que não). Correção no Dockerfile: `RUN sed -i 's/\r$//' ./gradlew && chmod +x ./gradlew`.
+
+### Lazy initialization vs falha em boot
+`HibernateUtil` tem `EntityManagerFactory` em campo `static final` — só é construído na
+primeira chamada à classe (lazy class loading). Resultado: se a config do banco está quebrada,
+a app **sobe normalmente** e só explode no primeiro request que toca o banco. Boot saudável
+não significa app saudável — sempre faça smoke test de um endpoint que percorre todas as
+camadas (login serve bem).
+
+---
+
 ## Plano do Projeto
 
 ### Estado Atual
@@ -152,28 +297,23 @@ Exemplo: `POST /api/orders?customerId=1`
 | Fase 3b — Estabilização | ✅ Concluída | Bean Validation, Flyway, Logback |
 | Fase 4 — Testes Unitários | ✅ Concluída | JUnit 5 + Mockito, 10 testes |
 | Fase 5 — Segurança JWT | ✅ Concluída | JWT + BCrypt, AuthFilter, @Secured, testes atualizados, testado end-to-end |
+| Fase 6a — CategoryResource | ✅ Concluída | CRUD completo de categorias (VT-00006) |
+| Fase 6b — Paginação | ✅ Concluída | `PageResponse<T>` em todos os `findAll` (VT-00006) |
+| Fase 6c — Optimistic Locking | ✅ Concluída | `@Version` em `Stock` + `409 CONFLICT` no mapper (VT-00006) |
+| Fase 7c — OpenAPI/Swagger | ✅ Concluída | Swagger Core, anotações em todas as resources (VT-00007) |
+| Fase 7a — Docker | ✅ Concluída | Multi-stage Dockerfile + docker-compose com MySQL, env vars, `@JsonIgnore` em `passwordHash` (VT-00008) |
 
-### Próximas Etapas Imediatas (Fase 6)
+### Próximas Etapas Imediatas
 
-1. `CategoryResource` — CRUD completo (hoje categorias só existem via SQL)
-2. Paginação nos endpoints de lista (`findAll`)
-3. `@Version` no `Stock` — Optimistic Locking para concorrência
+1. **Fase 7b — GitHub Actions** — CI com build + testes em cada push/PR
+2. **Fase 8 — Testcontainers** — testes de integração com MySQL real
+3. **DTO de saída** — `CustomerResponse` para substituir o `@JsonIgnore` paliativo
 
-### Roadmap Médio Prazo (Fases 6–7)
+### Roadmap
 
 | Fase | Descrição |
 |------|-----------|
-| Fase 6a | `CategoryResource` — CRUD completo (hoje categorias só existem via SQL) |
-| Fase 6b | Paginação nos endpoints de lista (`findAll`) |
-| Fase 6c | `@Version` no `Stock` — Optimistic Locking para concorrência |
-| Fase 7a | Docker — containerizar app + MySQL |
 | Fase 7b | GitHub Actions — CI com build + testes |
-| Fase 7c | OpenAPI/Swagger — documentação automática dos endpoints |
-
-### Roadmap Longo Prazo (Fase 8+)
-
-| Fase | Descrição |
-|------|-----------|
 | Fase 8 | Testes de integração com Testcontainers + MySQL real |
 | Futuro | Migrar para Spring Boot — após Vitrine concluído, novo projeto para comparar |
 
@@ -181,10 +321,10 @@ Exemplo: `POST /api/orders?customerId=1`
 
 | Item | Severidade | Quando resolver |
 |------|-----------|-----------------|
-| `SECRET` do JWT fixo no código | Alta | Antes de qualquer deploy — usar variável de ambiente |
-| `mysql-connector-j` como `implementation` (deveria ser `runtimeOnly`) | Baixa | Fase 7 (Docker/CI) |
 | Sem testes para `AuthServiceImpl` | Média | Fase 8 |
-| `CustomerResource.update` recebe `Customer` diretamente (sem DTO) | Média | Fase 6 — criar `CustomerUpdateRequest` sem campo `password` |
+| `CustomerResource.update` recebe entidade `Customer` direto (sem DTO de entrada) | Média | Criar `CustomerUpdateRequest` sem campo `password` |
+| `CustomerResource` retorna entidade `Customer` direto (sem DTO de saída) | Média | Criar `CustomerResponse` — `@JsonIgnore` no `passwordHash` é paliativo, mas vaza decisões internas (campos JPA, lazy proxies) |
+| `JWT_SECRET` default inseguro no código se env var ausente | Baixa | Aceitável em dev; em produção o `docker-compose.yml` deve falhar se a env não estiver setada |
 
 ---
 
@@ -210,11 +350,15 @@ Exemplo: `POST /api/orders?customerId=1`
 - Arquivo Flyway com `v` minúsculo e underscore duplo no nome
 - Typo em string literal (`"Unauthorize"` em vez de `"Unauthorized"`)
 - Código de outro teste inserido dentro do teste errado
+- `Properties.load(null)` — não checar `getResourceAsStream` antes (Fase 7a)
+- Vazamento de `passwordHash` por serializar entidade JPA direto na resposta (Fase 7a)
 
 ### Padrões e Princípios Demonstrados
 - Repository Pattern, Poor Man's Dependency Injection, DTO Pattern
 - Single Responsibility Principle, Dependency Inversion Principle, Open/Closed Principle
 - Interceptor Pattern, Chain of Responsibility, Marker Annotation Pattern
+- Generic Wrapper (`PageResponse<T>`), Optimistic Concurrency Control (`@Version`)
+- Externalized Configuration (12-Factor App #3), Multi-stage Docker Build
 
 ### Nível Atual
 **Júnior** (consolidado — evoluiu de Iniciante durante a Fase 5)
