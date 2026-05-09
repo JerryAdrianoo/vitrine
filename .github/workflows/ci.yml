@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          # Cacheia ~/.gradle/caches e ~/.gradle/wrapper.
+          # Chave do cache deriva dos arquivos *.gradle, então mudou build
+          # script → cache invalida; mudou só código → cache reaproveita.
+          cache: gradle
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build and test
+        # build inclui compileJava + test + assemble.
+        # --no-daemon: o runner é descartado, daemon não traz benefício.
+        # --stacktrace: se quebrar, log fica acionável sem reproduzir local.
+        run: ./gradlew build --no-daemon --stacktrace
+
+      - name: Upload test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: '**/build/reports/tests/'
+          retention-days: 7
