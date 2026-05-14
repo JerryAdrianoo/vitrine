@@ -285,6 +285,30 @@ camadas (login serve bem).
 
 ---
 
+## GitHub Actions / CI (Fase 7b)
+
+### Workflow
+`.github/workflows/ci.yml` roda em todo `push` e em `pull_request` para `master`: um job
+único (`build`) em `ubuntu-latest` que faz checkout, instala JDK 21 (Temurin) e executa
+`./gradlew build --no-daemon --stacktrace`.
+
+### Decisões
+- **`--no-daemon`**: o runner do GitHub é descartado a cada execução, então o Gradle daemon
+  não traz benefício — só consome memória durante o boot.
+- **`--stacktrace`**: se o build quebra, o log já vem acionável, sem precisar reproduzir local.
+- **`cache: gradle`** (no `setup-java`): cacheia `~/.gradle/caches` e `~/.gradle/wrapper`. A
+  chave deriva dos arquivos `*.gradle` — mudou build script, cache invalida; mudou só código,
+  cache reaproveita. Mesmo princípio da ordem dos `COPY` no Dockerfile.
+- **`chmod +x ./gradlew`**: o bit de execução nem sempre sobrevive ao checkout no Linux.
+- **Upload de test reports só `if: failure()`**: quando o build passa, os relatórios não
+  interessam; quando quebra, ficam disponíveis como artifact por 7 dias para inspeção.
+
+Princípio: **CI é a rede de segurança que roda o que você esqueceu de rodar**. O mesmo
+`./gradlew build` que você roda local agora roda em ambiente limpo a cada push — pega o
+"na minha máquina funciona".
+
+---
+
 ## Plano do Projeto
 
 ### Estado Atual
@@ -302,18 +326,17 @@ camadas (login serve bem).
 | Fase 6c — Optimistic Locking | ✅ Concluída | `@Version` em `Stock` + `409 CONFLICT` no mapper (VT-00006) |
 | Fase 7c — OpenAPI/Swagger | ✅ Concluída | Swagger Core, anotações em todas as resources (VT-00007) |
 | Fase 7a — Docker | ✅ Concluída | Multi-stage Dockerfile + docker-compose com MySQL, env vars, `@JsonIgnore` em `passwordHash` (VT-00008) |
+| Fase 7b — GitHub Actions | ✅ Concluída | CI com `./gradlew build` em cada push/PR (VT-00009) |
 
 ### Próximas Etapas Imediatas
 
-1. **Fase 7b — GitHub Actions** — CI com build + testes em cada push/PR
-2. **Fase 8 — Testcontainers** — testes de integração com MySQL real
-3. **DTO de saída** — `CustomerResponse` para substituir o `@JsonIgnore` paliativo
+1. **Fase 8 — Testcontainers** — testes de integração com MySQL real
+2. **DTO de saída** — `CustomerResponse` para substituir o `@JsonIgnore` paliativo
 
 ### Roadmap
 
 | Fase | Descrição |
 |------|-----------|
-| Fase 7b | GitHub Actions — CI com build + testes |
 | Fase 8 | Testes de integração com Testcontainers + MySQL real |
 | Futuro | Migrar para Spring Boot — após Vitrine concluído, novo projeto para comparar |
 
