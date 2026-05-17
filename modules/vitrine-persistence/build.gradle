@@ -10,4 +10,15 @@ dependencies {
 
     runtimeOnly 'com.mysql:mysql-connector-j:8.3.0'
     runtimeOnly 'org.flywaydb:flyway-mysql:10.15.0'
+
+    // Testes de integração com MySQL real via Testcontainers.
+    // mysql-connector-j não é redeclarado: testRuntimeOnly herda de runtimeOnly.
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.0'
+    testImplementation 'org.testcontainers:mysql:1.21.3'
+    // Força docker-java + transport httpclient5 mais novos que os do Testcontainers 1.21.3,
+    // necessário para falar com a API do Docker Desktop 4.71+.
+    testImplementation 'com.github.docker-java:docker-java-api:3.5.1'
+    testImplementation 'com.github.docker-java:docker-java-transport-httpclient5:3.5.1'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.13'
 }
