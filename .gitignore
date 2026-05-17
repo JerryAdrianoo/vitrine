@@ -44,6 +44,8 @@ bin/
 
 ### Credenciais ###
 **/database.properties
+# Exceto o database.properties de teste — usa credenciais fake (test/test) do Testcontainers
+!modules/vitrine-persistence/src/test/resources/database.properties
 
 ### IntelliJ IDEA — pasta completa ###
 .idea/
